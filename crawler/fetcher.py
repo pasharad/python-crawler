@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from typing import Optional
-
+from utils.helpers import logger
 
 def fetch_page(url: str) -> Optional[str]:
     """
@@ -11,12 +11,15 @@ def fetch_page(url: str) -> Optional[str]:
     headers = {
         "User-Agent": "Mozilla/5.0 (compatible; SpaceNewsCrawler/1.0)"
     }
+    if not url:
+        return None
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
+        logger.info(f"Web page fetched, {url}")
         return response.text
     except requests.RequestException as e:
-        print(f"[ERROR] Failed to fetch page: {url}\n{e}")
+        logger.error(f"[ERROR] Failed to fetch page: {url}\n{e}")
         return None
     
 def get_soup(url: str) -> Optional[BeautifulSoup]:
