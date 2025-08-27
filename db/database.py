@@ -1,5 +1,4 @@
 import sqlite3
-from typing import Optional
 from db.models import Article, CleanArticle
 from utils.helpers import logger
 
@@ -32,6 +31,7 @@ def create_tables():
             translated_text TEXT,
             source TEXT,
             tags TEXT,
+            sent BOOL DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT (datetime(CURRENT_TIMESTAMP, '+3 hours', '+30 minutes'))
         )""")
         conn.commit()
@@ -81,12 +81,28 @@ def get_uncleaned_articles():
         rows = c.fetchall()
         return [Article(*row) for row in rows]
 
-def get_cleaned_articles():
+def get_not_send_cleaned_articles():
     with connect() as conn:
         c = conn.cursor()
         c.execute("""
-        SELECT *
+        SELECT c.title, c.url, c.date, c.description, c.summery, c.translated_text, c.source, c.tags
         FROM articles_cleaned c
+        WHERE c.sent = FALSE
         """)
         rows = c.fetchall()
-        return [Article(*row) for row in rows]
+        return [CleanArticle(*row) for row in rows]
+    
+def mark_article_sent(url: str):
+    with connect() as conn:
+        c = conn.cursor()
+        try:    
+
+            c.execute("""
+            UPDATE articles_cleaned
+            SET sent = TRUE
+            WHERE url = ?
+            """, (url, ))
+            conn.commit()
+
+        except sqlite3.IntegrityError:
+            pass
