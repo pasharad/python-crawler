@@ -22,12 +22,15 @@ def fetch_page(url: str) -> Optional[str]:
         logger.error(f"[ERROR] Failed to fetch page: {url}\n{e}")
         return None
     
-def get_soup(url: str) -> Optional[BeautifulSoup]:
+def get_soup(url: str, session=None, headers=None, timeout=15) -> Optional[BeautifulSoup]:
     """
     Returns a BeautifulSoup object for the given URL, or None if failed.
     """
-    html = fetch_page(url)
-    if html:
-        soup = BeautifulSoup(html, "html.parser")
-        return soup
-    return None
+    try:
+        resp = session.get(url, headers=headers, timeout=timeout)
+        resp.raise_for_status()
+        logger.info(f"Web page fetched, {url}")
+        return BeautifulSoup(resp.text, "html.parser")
+    except Exception as e:
+        logger.error(f"[ERROR] Failed to get soup for {url}: {e}")
+        return None

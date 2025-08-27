@@ -8,7 +8,7 @@ def exctract_articles(soup: BeautifulSoup, web: dict) -> List[Dict]:
     """
     articles = []
     if not soup:
-        return None
+        return articles
     divs = soup.find_all(web["divs"]["name"], class_=web["divs"]["class"])
     for div in divs:
         if web["type"] == 2:
@@ -17,16 +17,16 @@ def exctract_articles(soup: BeautifulSoup, web: dict) -> List[Dict]:
             title_tag = div.find("h3")
         if web["type"] == 1:
             date_tag = div.find("span", class_="entry-meta-date updated").find("a")
-            date = date_tag.get_text(strip=True) if date_tag else None
+            date = date_tag.get_text(strip=True) if date_tag else ""
         else:
             date_tag = div.find("time")
-            date = date_tag["datetime"] if date_tag and "datetime" in date_tag.attrs else None
+            date = date_tag["datetime"] if date_tag and "datetime" in date_tag.attrs else ""
         link_tag = div.find("a", href=True)
 
 
-        title = title_tag.get_text(strip=True) if title_tag else None
+        title = title_tag.get_text(strip=True) if title_tag else ""
         
-        url = link_tag["href"] if link_tag else None
+        url = link_tag["href"] if link_tag else ""
 
         articles.append({
             "title" : title,
