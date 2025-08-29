@@ -38,4 +38,4 @@ USER_AGENTS = [
 
 TOKEN = "bot344222:4fd469a6-3882-43da-ba12-8f24dee58e74"
 API_URL = f"https://eitaayar.ir/api/{TOKEN}/sendMessage"
-CHAT_ID = 10846617
+CHAT_ID = 10853438
