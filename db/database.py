@@ -34,7 +34,18 @@ def create_tables():
             sent BOOL DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT (datetime(CURRENT_TIMESTAMP, '+3 hours', '+30 minutes'))
         )""")
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS match_rules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pattern TEXT NOT NULL,     -- واژه/عبارت یا الگوی ساده
+            tag TEXT NOT NULL,         -- تگ مقصد
+            enabled BOOL DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT (datetime(CURRENT_TIMESTAMP, '+3 hours', '+30 minutes'))
+        )""")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_articles_cleaned_sent ON articles_cleaned(sent)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_articles_cleaned_tags ON articles_cleaned(tags)")
         conn.commit()
+
 
 def raw_article_exists(url: str) -> bool:
     with connect() as conn:
@@ -106,3 +117,55 @@ def mark_article_sent(url: str):
 
         except sqlite3.IntegrityError:
             pass
+
+def get_counts_and_tags_breakdown():
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM articles_raw")
+        total_raw = c.fetchone()[0] or 0
+
+        c.execute("SELECT COUNT(*) FROM articles_cleaned")
+        total_cleaned = c.fetchone()[0] or 0
+
+        # استخراج فراوانی تگ‌ها از ستون tags که CSV است
+        c.execute("SELECT COALESCE(tags,'') FROM articles_cleaned")
+        rows = c.fetchall()
+
+        from collections import Counter
+        counter = Counter()
+        for (tags_csv,) in rows:
+            if not tags_csv:
+                continue
+            for t in [x.strip() for x in tags_csv.split(",") if x.strip()]:
+                counter[t] += 1
+
+        breakdown = [{"tag": k, "count": v} for k, v in counter.most_common()]
+        return total_raw, total_cleaned, breakdown
+    
+
+def rules_all():
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("SELECT id, pattern, tag, enabled FROM match_rules ORDER BY id DESC")
+        return c.fetchall()
+
+def rules_create(pattern: str, tag: str, enabled: bool=True):
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("INSERT INTO match_rules (pattern, tag, enabled) VALUES (?, ?, ?)",
+                  (pattern.strip(), tag.strip(), enabled))
+        conn.commit()
+        return c.lastrowid
+
+def rules_update(rule_id: int, pattern: str, tag: str, enabled: bool):
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("UPDATE match_rules SET pattern=?, tag=?, enabled=? WHERE id=?",
+                  (pattern.strip(), tag.strip(), enabled, rule_id))
+        conn.commit()
+
+def rules_delete(rule_id: int):
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM match_rules WHERE id=?", (rule_id,))
+        conn.commit()

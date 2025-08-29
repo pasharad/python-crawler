@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
+from db.database import rules_all
 
 def exctract_articles(soup: BeautifulSoup, web: dict) -> List[Dict]:
     """
@@ -72,8 +73,21 @@ def check_article(article: dict) -> bool:
         return False
 
     text = article["description"].lower()
-    return any(keyword.lower() in text for keyword in KEYWORDS)
+    
+    rows = rules_all()
+    
+    if not rows:
+        return any(keyword.lower() in text for keyword in KEYWORDS)
 
+
+    for r in rows:
+        pattern = r[1]
+        enabled = bool(r[3])
+        if not enabled or not pattern:
+            continue
+        if pattern.lower() in text:
+            return True
+    return False
 
 
 
@@ -81,8 +95,21 @@ def extract_tags(text: str) -> list[str]:
     """
     Returns a list of matched keywords found in the input text.
     """
+    tags = []
     if not text:
-        return []
+        return tags
 
     text_lower = text.lower()
-    return [kw for kw in KEYWORDS if kw.lower() in text_lower]
+    
+    rows = rules_all()
+    if not rows:
+            tags = [kw for kw in KEYWORDS if kw.lower() in text_lower]
+            return tags
+    for r in rows:
+        pattern = r[1]
+        enabled = bool(r[3])
+        if not enabled or not pattern:
+            continue
+        if pattern.lower() in text_lower:
+            tags.append(pattern)
+    return tags

@@ -153,8 +153,9 @@ def sender_thread(chat_id: int, api_url: str, get_article, marker) -> None:
         try:
             not_send_cleaned_articles = get_article()
             for article in not_send_cleaned_articles:
-
-                text_to_sent = article.translated_text if article.translated_text else article.description[:3600]
+                if not article.translated_text:
+                    continue
+                text_to_sent = article.translated_text  
                 tags = " ".join([f"#{tag.strip()}" for tag in article.tags.split(",") if tag.strip()])
                 message = f"{text_to_sent}\n\n{tags}\n{article.url}"
 

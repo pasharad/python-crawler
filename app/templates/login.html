@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>ورود</h2>
+  <form method="post" action="/login" class="form">
+    <label>نام کاربری
+      <input type="text" name="username" required />
+    </label>
+    <label>رمز عبور
+      <input type="password" name="password" required />
+    </label>
+    <button type="submit">ورود</button>
+  </form>
+  <p class="hint">پیش‌فرض: admin / admin123 (تغییر بده)</p>
+</section>
+{% endblock %}

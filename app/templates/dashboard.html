@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="grid">
+  <div class="card">
+    <h3>آمار کلی</h3>
+    <div class="stats">
+      <div>کل مقالات: <span id="total-raw">0</span></div>
+      <div>تصحیح شده: <span id="total-cleaned">0</span></div>
+    </div>
+    <canvas id="pieChart" width="400" height="400"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>تفکیک نشانه ها</h3>
+    <table class="table" id="tags-table">
+      <thead>
+        <tr>
+          <th>نشانه</th>
+          <th>تعداد</th>
+          <th>٪ از تصحیح شده ها</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+
+  <div class="card">
+    <h3>روند ۱۰ روز اخیر</h3>
+    <canvas id="trendChart" width="400" height="200"></canvas>
+  </div>
+  
+  <div class="card">
+    <h3>کلمات کلیدی  </h3>
+    <form id="rule-create" class="form-inline">
+      <input type="text" name="pattern" placeholder="الگو (مثلاً: بورس)" required />
+      <input type="text" name="tag" placeholder="نشانه (مثلاً: اقتصاد)" required />
+      <label class="switch">
+        فعال؟ <input type="checkbox" name="enabled" checked />
+      </label>
+      <button type="submit">افزودن کلمه کلیدی</button>
+    </form>
+
+    <table class="table" id="rules-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Pattern</th>
+          <th>Tag</th>
+          <th>Enabled</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

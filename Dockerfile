@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libxslt1-dev \
     python3-dev \
+    supervisor \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (for caching)
@@ -29,5 +30,9 @@ RUN mkdir -p data logs
 
 # Expose port if using FastAPI later
 
-# Run main.py
-CMD ["python", "main.py"]
+EXPOSE 8000
+
+# add supervisord config file
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

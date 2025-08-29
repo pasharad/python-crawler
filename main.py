@@ -29,6 +29,7 @@ def cleaner_thread(summarizer: get_summarizer = None) -> None:
             uncleaned = get_uncleaned_articles()
             for article in uncleaned:
                 if check_article(article._asdict()):
+                    print("*********checked********")
                     if article.source == "spacenews":
                         text = article.description.split("\n")[0]
                         article = article._replace(description=text)
