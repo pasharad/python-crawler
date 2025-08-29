@@ -76,8 +76,8 @@ def check_article(article: dict) -> bool:
     
     rows = rules_all()
     
-    if not rows:
-        return any(keyword.lower() in text for keyword in KEYWORDS)
+    
+    c_keywords = KEYWORDS.copy()
 
 
     for r in rows:
@@ -85,9 +85,8 @@ def check_article(article: dict) -> bool:
         enabled = bool(r[3])
         if not enabled or not pattern:
             continue
-        if pattern.lower() in text:
-            return True
-    return False
+        c_keywords.append(pattern)
+    return any(keyword.lower() in text for keyword in KEYWORDS)
 
 
 
@@ -100,16 +99,15 @@ def extract_tags(text: str) -> list[str]:
         return tags
 
     text_lower = text.lower()
-    
+    c_keywords = KEYWORDS.copy()
     rows = rules_all()
-    if not rows:
-            tags = [kw for kw in KEYWORDS if kw.lower() in text_lower]
-            return tags
+
     for r in rows:
         pattern = r[1]
         enabled = bool(r[3])
         if not enabled or not pattern:
             continue
-        if pattern.lower() in text_lower:
-            tags.append(pattern)
+        if pattern not in c_keywords:
+            c_keywords.append(pattern)
+    tags = [kw for kw in c_keywords if kw.lower() in text_lower]
     return tags

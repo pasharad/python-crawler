@@ -101,6 +101,7 @@ async function loadTrend() {
   const counts = data.trend.map(x => x.count);
 
   const ctx = document.getElementById('trendChart').getContext('2d');
+  if (trendChart) trendChart.destroy();
   new Chart(ctx, {
     type: 'line',
     data: {

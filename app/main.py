@@ -12,7 +12,7 @@ from app.auth import router as auth_router, is_logged_in
 SECRET_KEY = os.getenv("APP_SECRET", "change-me-please")
 
 app = FastAPI(title="Crawler Panel")
-app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax", https_only=False)
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="none", https_only=False)
 
 # static & templates
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
