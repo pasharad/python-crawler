@@ -61,7 +61,7 @@ jobs:
             docker rm space-crawler || true
 
             # اجرای کانتینر با پایداری و ولوم‌ها
-            docker run -d -p 8000:8000 --name space-crawler --name space-crawler \
+            docker run -d -p 8000:80 --name space-crawler --name space-crawler \
               --restart=always \
               -v /opt/space-crawler/data:/app/data \
               -v /opt/space-crawler/logs:/app/logs \

@@ -1,4 +1,5 @@
 let pieChart;
+let trendChart;
 
 async function fetchJSON(url, opts = {}) {
   const res = await fetch(url, opts);
@@ -102,7 +103,7 @@ async function loadTrend() {
 
   const ctx = document.getElementById('trendChart').getContext('2d');
   if (trendChart) trendChart.destroy();
-  new Chart(ctx, {
+  trendChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
