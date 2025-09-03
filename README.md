@@ -34,10 +34,12 @@ Open the web UI at http://localhost:8000/ (login required — see auth.py).
 - Rules are stored in the match_rules table and control which articles are processed.
 - Manage rules via the admin UI or API.
 - Programmatic DB API:
--- db.database.rules_all() — list rules
--- db.database.rules_create(...) — create rule
--- db.database.rules_update(...) — update rule
--- db.database.rules_delete(id) — delete rule
+| Function | Description |
+| --- | --- |
+| `db.database.rules_all()` | List rules |
+| `db.database.rules_create(pattern, tag, enabled=True)` | Create rule |
+| `db.database.rules_update(id, pattern=None, tag=None, enabled=None)` | Update rule |
+| `db.database.rules_delete(id)` | Delete rule |
 
 ## API (admin)
 - GET /api/stats — stats and tag breakdown
