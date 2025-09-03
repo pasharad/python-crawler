@@ -34,6 +34,7 @@ Open the web UI at http://localhost:8000/ (login required — see auth.py).
 - Rules are stored in the match_rules table and control which articles are processed.
 - Manage rules via the admin UI or API.
 - Programmatic DB API:
+
 | Function | Description |
 | --- | --- |
 | `db.database.rules_all()` | List rules |
