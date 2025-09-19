@@ -22,6 +22,9 @@ webs = {
     }
 }
 
+live_web = {
+    "divs" : {"name": "div", "class": "wcp-item-content"}
+}
 # tuning
 FAST_PAGES = 3
 FAST_INTERVAL = 60
