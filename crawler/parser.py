@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
 from db.database import rules_all
@@ -23,6 +24,8 @@ def exctract_articles(soup: BeautifulSoup, web: dict) -> List[Dict]:
             date_tag = div.find("time")
             date = date_tag["datetime"] if date_tag and "datetime" in date_tag.attrs else ""
         link_tag = div.find("a", href=True)
+        if link_tag == "https://www.space.com/live/rocket-launch-today":
+            continue
 
 
         title = title_tag.get_text(strip=True) if title_tag else ""
@@ -51,7 +54,8 @@ def exctract_full_description(soup: BeautifulSoup, id: Optional[str], class_: Op
     if not article_div:
         return None
     paragraphs = article_div.find_all("p")
-    full_text = "\n".join([p.get_text(strip=True) for p in paragraphs])
+    clean_paragraphs = [p.get_text(strip=True) for p in paragraphs if not p.find_parent("div", class_="newsletter-form__container")]
+    full_text = "\n".join(clean_paragraphs)
     
     return full_text
 
@@ -86,7 +90,7 @@ def check_article(article: dict) -> bool:
         if not enabled or not pattern:
             continue
         c_keywords.append(pattern)
-    return any(keyword.lower() in text for keyword in KEYWORDS)
+    return any(keyword.lower() in text for keyword in c_keywords)
 
 
 
@@ -94,7 +98,6 @@ def extract_tags(text: str) -> list[str]:
     """
     Returns a list of matched keywords found in the input text.
     """
-    tags = []
     if not text:
         return tags
 
@@ -111,3 +114,42 @@ def extract_tags(text: str) -> list[str]:
             c_keywords.append(pattern)
     tags = [kw for kw in c_keywords if kw.lower() in text_lower]
     return tags
+
+def extract_articles_from_live(soup: BeautifulSoup, web: dict, last_date: int) -> List[Dict]:
+    """Return list of article dicts with keys: title, url, date (datetime or None), description, source"""
+    results = []
+    if not soup:
+        return results
+    divs = soup.find_all(web["divs"]["name"], class_=web["divs"]["class"])
+    today = datetime.now()
+    last_date = today - timedelta(days=11)
+    for div in divs:
+        title = div.find("h3")
+        date = div.find("time")
+        description = div.find_all("p")
+        clean_description = [p.get_text(strip=True) for p in description]
+        full_text = "\n".join(clean_description)
+        if description == None:
+            continue
+        items = []
+
+        unordered_items = div.find_all("li")
+        if unordered_items:
+            for item in unordered_items:
+                item_keyword = item.find("strong").get_text(strip=True)
+                item_value = item.get_text(strip=True).replace(item_keyword, "").strip()
+                items.append({item_keyword : item_value})
+        else:
+            continue
+
+        if title == None or date == None or full_text == None or datetime.fromisoformat(date.get_text(strip=True).replace("Z", "+00:00")).replace(tzinfo=None).date() < last_date.date():
+            continue
+        news = {
+            "title" : title.get_text(strip=True) if title else "",
+            "description" : full_text,
+            "date" : date.get_text(strip=True) if date else "",
+            "ul" : items
+        }
+        results.append(news)
+
+    return results

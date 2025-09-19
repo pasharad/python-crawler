@@ -1,3 +1,5 @@
+import ast
+import json
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import logging
@@ -177,3 +179,39 @@ def sender_thread(chat_id: int, api_url: str, get_article, marker) -> None:
 
 
     
+def sender_thread_rnews(chat_id: int, api_url: str, get_rnews, marker) -> None:
+    """
+    Background thread to send cleaned articles to Eitaa channel.
+    """
+    CHAT_ID = chat_id
+    API_URL = api_url
+
+    while True:
+        try:
+            not_send_rocket_news = get_rnews()
+            for news in not_send_rocket_news:
+                if not news.translated:
+                    continue
+                text_to_sent = news.translated
+                news_ul = ast.literal_eval(news.item_list)
+                item_lists = "\n".join(f"{list(d.keys())[0]} {list(d.values())[0]}" for d in news_ul)
+                message = f"""
+{item_lists}\n
+{text_to_sent}\n
+"""
+
+                payload = {
+                        "chat_id": CHAT_ID,
+                        "title": news.title,
+                        "text": message,
+                        "date": int(time.time()) + 30 # send after 30 seconds
+                    }
+                resp = requests.post(API_URL, data=payload)
+                logger.info(f"Sent news {news.title} → {resp.text}")
+
+                marker(news.title)
+
+        except Exception as e:
+            logger.error(f"[ERROR] Sender thread rnews failed: {e}", exc_info=True)
+        
+        time.sleep(24*60*60)

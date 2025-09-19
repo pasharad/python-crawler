@@ -1,5 +1,5 @@
 import sqlite3
-from db.models import Article, CleanArticle
+from db.models import Article, CleanArticle, RocketNews
 from utils.helpers import logger
 
 DB_PATH = "data/news.db"
@@ -40,6 +40,17 @@ def create_tables():
             pattern TEXT NOT NULL,     -- واژه/عبارت یا الگوی ساده
             tag TEXT NOT NULL,         -- تگ مقصد
             enabled BOOL DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT (datetime(CURRENT_TIMESTAMP, '+3 hours', '+30 minutes'))
+        )""")
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS rocket_launch (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL, 
+            item_list TEXT NOT NULL,         
+            description TEXT NOT NULL,
+            date TEXT NOT NULL,
+            translated TEXT NOT NULL,
+            sent BOOL DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT (datetime(CURRENT_TIMESTAMP, '+3 hours', '+30 minutes'))
         )""")
         c.execute("CREATE INDEX IF NOT EXISTS idx_articles_cleaned_sent ON articles_cleaned(sent)")
@@ -91,6 +102,23 @@ def get_uncleaned_articles():
         """)
         rows = c.fetchall()
         return [Article(*row) for row in rows]
+    
+def get_cleaned_articles():
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("""
+            SELECT r.title, r.url, r.date, r.description, r.summery, r.translated_text, r.source, r.tags
+            """)
+        rows = c.fetchall()
+        return [CleanArticle(*row) for row in rows]
+    
+def update_cleaned_articles(tags: str, url:str):
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("""
+                UPDATE articles_cleaned SET tags=? where url=?
+                """, (tags, url))
+        conn.commit()
 
 def get_not_send_cleaned_articles():
     with connect() as conn:
@@ -169,3 +197,45 @@ def rules_delete(rule_id: int):
         c = conn.cursor()
         c.execute("DELETE FROM match_rules WHERE id=?", (rule_id,))
         conn.commit()
+
+def rocket_lunch_exists(title: str) -> bool:
+    """Return True if url already stored in rocket_launch table."""
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("SELECT id FROM rocket_launch WHERE title = ?", (title,))
+        row = c.fetchone()
+        return row is not None
+
+def insert_rocket_lunch(rocket_news: RocketNews) -> None:
+    """Insert a rocket launch record into DB."""
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("INSERT INTO rocket_launch (title, item_list, description, date, translated) VALUES (?, ?, ?, ?, ?)",
+                   (rocket_news.title, rocket_news.item_list, rocket_news.description, rocket_news.date, rocket_news.translated))
+        conn.commit()
+
+def get_not_send_rocket_news():
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("""
+        SELECT r.title, r.item_list, r.description, r.date, r.translated
+        FROM rocket_launch r
+        WHERE r.sent = FALSE
+        """)
+        rows = c.fetchall()
+        return [RocketNews(*row) for row in rows]
+    
+def mark_rocket_news_sent(title: str):
+    with connect() as conn:
+        c = conn.cursor()
+        try:    
+
+            c.execute("""
+            UPDATE rocket_launch
+            SET sent = TRUE
+            WHERE title = ?
+            """, (title, ))
+            conn.commit()
+
+        except sqlite3.IntegrityError:
+            pass
