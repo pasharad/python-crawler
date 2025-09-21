@@ -144,7 +144,7 @@ def get_summarizer() -> pipeline:
         logger.error(f"[ERROR] Failed to load summarizer: {e}")
         return None
     
-def sender_thread(chat_id: int, api_url: str, get_article, marker) -> None:
+def sender_thread(chat_id: int, api_url: str, get_article, marker, google_translate) -> None:
     """
     Background thread to send cleaned articles to Eitaa channel.
     """
@@ -155,11 +155,15 @@ def sender_thread(chat_id: int, api_url: str, get_article, marker) -> None:
         try:
             not_send_cleaned_articles = get_article()
             for article in not_send_cleaned_articles:
-                if not article.translated_text:
+                if not article.translated_text or not article.tags:
                     continue
+                title = article.title
+                translated_title = translator(google_translate, title)
                 text_to_sent = article.translated_text  
                 tags = " ".join([f"#{tag.strip()}" for tag in article.tags.split(",") if tag.strip()])
-                message = f"{text_to_sent}\n\n{tags}\n{article.url}"
+                if tags.lower() == "#orbit" or tags.lower() == "#launch":
+                    continue
+                message = f"{translated_title}\n\n\n{text_to_sent}\n\n{tags}\n{article.url}"
 
                 payload = {
                         "chat_id": CHAT_ID,
@@ -198,6 +202,7 @@ def sender_thread_rnews(chat_id: int, api_url: str, get_rnews, marker) -> None:
                 message = f"""
 {item_lists}\n
 {text_to_sent}\n
+#Daily_Rocket_Launch
 """
 
                 payload = {

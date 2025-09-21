@@ -151,7 +151,7 @@ def main():
     t = threading.Thread(target=cleaner_thread, args=(summarizer,), daemon=True)
     t.start()
 
-    t2 = threading.Thread(target=sender_thread, args=(CHAT_ID, API_URL, get_not_send_cleaned_articles, mark_article_sent), daemon=True)
+    t2 = threading.Thread(target=sender_thread, args=(CHAT_ID, API_URL, get_not_send_cleaned_articles, mark_article_sent, GoogleTranslator), daemon=True)
     t2.start()
 
     session = make_session()
