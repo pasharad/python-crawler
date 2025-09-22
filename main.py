@@ -4,7 +4,7 @@ from crawler.fetcher import get_soup
 from crawler.parser import exctract_articles, exctract_full_description, check_article, extract_tags, extract_articles_from_live
 from db.database import create_tables, raw_article_exists, insert_raw_article, get_uncleaned_articles, insert_cleaned_article, get_not_send_cleaned_articles, mark_article_sent, insert_rocket_lunch, rocket_lunch_exists, get_not_send_rocket_news, mark_rocket_news_sent, get_cleaned_articles,rules_all,update_cleaned_articles
 from db.models import Article, CleanArticle, RocketNews
-from utils.helpers import summarizer_func, translator, logger, build_page_url, make_session, get_summarizer, sender_thread, sender_thread_rnews
+from utils.helpers import summarize, translator, logger, build_page_url, make_session, sender_thread, sender_thread_rnews
 from config import webs, live_web, USER_AGENTS, FAST_INTERVAL, FAST_PAGES, BACKFILL_INTERVAL, REQUEST_MAX, REQUEST_MIN, API_URL, CHAT_ID
 from deep_translator import GoogleTranslator
 import threading
@@ -12,17 +12,11 @@ import time
 
 
 
-def cleaner_thread(summarizer: get_summarizer = None) -> None:
+def cleaner_thread() -> None:
     """
     Background thread to clean and summarize & translate articles.
     """
-    try:
-        summarizer = summarizer
-        if summarizer is None:
-            logger.warning("Summarizer unavailable — continuing without summarization.")
-    except Exception as e:
-        logger.error(f"[ERROR] Failed to get summarizer: {e}")
-        summarizer = None
+    
     
     while True:
         try:
@@ -33,12 +27,12 @@ def cleaner_thread(summarizer: get_summarizer = None) -> None:
                         text = article.description.split("\n")[0]
                         article = article._replace(description=text)
 
-                    if summarizer:
-                        try:
-                            summarized_text = summarizer_func(summarizer, article.description)
-                        except Exception as e:
-                            logger.error(f"Summarizer failed. Title: {article.title}")
-                            summarized_text = ""
+                    
+                    try:
+                        summarized_text = summarize(article.description, abstractive=True)
+                    except Exception as e:
+                        logger.error(f"Summarizer failed. Title: {article.title}")
+                        summarized_text = ""
                     try:
                         translated_text = translator(GoogleTranslator, summarized_text)
                     except Exception as e:
@@ -147,8 +141,7 @@ def check_cleaned_article() -> None:
 
 def main():
     create_tables()
-    summarizer = get_summarizer()
-    t = threading.Thread(target=cleaner_thread, args=(summarizer,), daemon=True)
+    t = threading.Thread(target=cleaner_thread, args=(), daemon=True)
     t.start()
 
     t2 = threading.Thread(target=sender_thread, args=(CHAT_ID, API_URL, get_not_send_cleaned_articles, mark_article_sent, GoogleTranslator), daemon=True)
