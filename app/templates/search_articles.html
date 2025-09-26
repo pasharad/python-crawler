@@ -28,6 +28,7 @@
                 <th>منبع</th>
                 <th> نشانه ها</th>
                 <th id="type">دسته بندی</th>
+                <th>خلاصه شخصی</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -142,6 +143,11 @@
     min-width: 150px; /* ستون دسته بندی  */
     }
 
+    table th:nth-child(12),
+    table td:nth-child(12) {
+    min-width: 150px; /* ستون دسته بندی  */
+    }
+
 </style>
 
 <script>
@@ -172,10 +178,10 @@ document.getElementById("search-btn").addEventListener("click", async () => {
                 <td>${article.date}</td>
                 <td>${article.description.slice(0, 100)}...</td>
                 <td>${article.summery || ""}</td>
+                <td>${article.second_summery || ""}</td>
                 <td>${article.translated_text || ""}</td>
+                <td>${article.second_translated_text || ""}</td>
                 <td>${article.source || ""}</td>
-                <td>${article.tags || ""}</td>
-                <td>${article.tags || ""}</td>
                 <td>${article.tags || ""}</td>
                 <td>
                     <select data-id="${article.id}">
@@ -187,10 +193,25 @@ document.getElementById("search-btn").addEventListener("click", async () => {
                         `).join('')}
                     </select>
                 </td>
+                <td>
+                    <textarea style="height:300px; width:300px;" data-id="${article.id}">${article.personal_summary || ""}</textarea>\
+                </td>
             `;
             tbody.appendChild(row);
         });
+        // هندل تغییر خلاصه شخصی    
+        document.querySelectorAll("textarea[data-id]").forEach(textarea => {
+            textarea.addEventListener("blur", async () => {
+                const id = textarea.dataset.id;
+                const personal_summary = textarea.value;
 
+                await fetch(`/api/articles/set_personal_summary/${id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ personal_summary })
+                });
+            });
+        });
         // هندل تغییر Type در سلکت باکس
         document.querySelectorAll("select[data-id]").forEach(sel => {
             sel.addEventListener("change", async () => {

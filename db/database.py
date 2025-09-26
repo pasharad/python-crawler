@@ -33,7 +33,10 @@ def create_tables():
             date TEXT,
             description TEXT,
             summery TEXT,
+            second_summery TEXT,
+            personal_opinion TEXT DEFAULT NULL,
             translated_text TEXT,
+            second_translated_text TEXT,
             source TEXT,
             tags TEXT,
             sent BOOL DEFAULT FALSE,
@@ -89,9 +92,9 @@ def insert_cleaned_article(article: CleanArticle):
         c = conn.cursor()
         try:
             c.execute("""
-            INSERT INTO articles_cleaned (title, url, date, description, summery, translated_text, source, tags)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (article.title, article.url, article.date, article.description, article.summery, article.translated_text, article.source, article.tags))
+            INSERT INTO articles_cleaned (title, url, date, description, summery, second_summery, translated_text, second_translated_text, source, tags)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (article.title, article.url, article.date, article.description, article.summery, article.second_summery, article.translated_text, article.second_translated_text, article.source, article.tags))
             conn.commit()
             logger.info(f"Article cleaned and saved: {article.title}")
         except sqlite3.IntegrityError:
@@ -131,13 +134,24 @@ def get_cleaned_articles_by_date(date: str):
     with connect() as conn:
         c = conn.cursor()
         c.execute("""
-        SELECT c.id, c.title, c.url, c.date, c.description, c.summery, c.translated_text, c.source, c.tags, c.type_id
+        SELECT c.id, c.title, c.url, c.date, c.description, c.summery, c.second_summery, c.personal_opinion, c.translated_text, c.second_translated_text, c.source, c.tags, c.type_id
         FROM articles_cleaned c
         WHERE DATE(c.date) = DATE(?)
         """, (date,))
         rows = c.fetchall()
         return rows
     
+def set_personal_opinion(article_id: int, opinion: str):
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute(
+            """
+            UPDATE articles_cleaned
+            SET personal_opinion = ?
+            WHERE id = ?
+            """, (opinion, article_id)
+        )
+
 def set_type(article_id: int, type_id: int):
     with connect() as conn:
         c = conn.cursor()

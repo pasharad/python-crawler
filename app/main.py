@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-from db.database import get_counts_and_tags_breakdown, rules_all, rules_create, rules_delete, rules_update, types_all, types_create, types_delete, types_update, get_cleaned_articles_by_date, set_type
+from db.database import get_counts_and_tags_breakdown, rules_all, rules_create, rules_delete, rules_update, types_all, types_create, types_delete, types_update, get_cleaned_articles_by_date, set_type, set_personal_opinion
 from app.auth import router as auth_router, is_logged_in
 
 SECRET_KEY = os.getenv("APP_SECRET", "change-me-please")
@@ -170,7 +170,7 @@ def api_search_articles(request: Request, date):
     if not is_logged_in(request):
         return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
 
-    results = [{"id": r[0], "title": r[1], "url": r[2], "date": r[3], "description": r[4], "summery": r[5], "translated_text": r[6], "source": r[7], "tags": r[8], "type_id": r[9]} for r in get_cleaned_articles_by_date(date) if r[8]]
+    results = [{"id": r[0], "title": r[1], "url": r[2], "date": r[3], "description": r[4], "summery": r[5], "second_summery" : r[6], "personal_opinion" : r[7], "translated_text": r[8], "second_translated_text" : r[9], "source": r[10], "tags": r[11], "type_id": r[12]} for r in get_cleaned_articles_by_date(date) if r[11]]
     return results
 
 @app.post("/api/articles/set_type/{article_id}")
@@ -180,3 +180,14 @@ async def api_articles_set_types(request: Request, article_id: int):
     type_id = await request.json()
     type_id = int(type_id["type_id"]) if type_id["type_id"] else None
     set_type(article_id, type_id)
+
+@app.post("/api/articles/set_personal_summary/{article_id}")
+async def api_personal_summary(request: Request, article_id: int):
+    if not is_logged_in(request):
+        return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+    data = await request.json()
+    personal_summary = data.get("personal_summary")
+    if personal_summary == '':
+        personal_summary = None
+    set_personal_opinion(article_id, personal_summary)
+    return {"ok": True}

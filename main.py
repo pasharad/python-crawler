@@ -30,11 +30,13 @@ def cleaner_thread() -> None:
                     
                     try:
                         summarized_text = summarize(article.description, abstractive=True)
+                        second_summarized_text = summarize(article.description, abstractive=True, style="tech")
                     except Exception as e:
                         logger.error(f"Summarizer failed. Title: {article.title}")
                         summarized_text = ""
                     try:
                         translated_text = translator(GoogleTranslator, summarized_text)
+                        second_translated_text = translator(GoogleTranslator, second_summarized_text)
                     except Exception as e:
                         logger.error(f"Translator failed. Title: {article.title}")
                         translated_text = ""
@@ -47,7 +49,9 @@ def cleaner_thread() -> None:
                             date=article.date,
                             description=article.description,
                             summery=summarized_text,
+                            second_summery=second_summarized_text,
                             translated_text=translated_text,
+                            second_translated_text=second_translated_text,
                             source=article.source,
                             tags=", ".join(tags)
                     )
