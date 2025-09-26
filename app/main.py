@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-from db.database import get_counts_and_tags_breakdown, rules_all, rules_create, rules_delete, rules_update
+from db.database import get_counts_and_tags_breakdown, rules_all, rules_create, rules_delete, rules_update, types_all, types_create, types_delete, types_update
 from app.auth import router as auth_router, is_logged_in
 
 SECRET_KEY = os.getenv("APP_SECRET", "change-me-please")
@@ -32,10 +32,45 @@ app.include_router(auth_router, tags=["auth"])
 @app.get("/")
 def dashboard(request: Request):
     if not is_logged_in(request):
-        return RedirectResponse(url="/login", status_code=303)
+        return RedirectResponse(url="/login", status_code=401)
     return templates.TemplateResponse("dashboard.html", {"request": request, "title": "Dashboard"})
 
+@app.get("/types")
+def types_page(request: Request):
+    if not is_logged_in(request):
+        return RedirectResponse(url="/login", status_code=401)
+    return templates.TemplateResponse("types.html", {"request": request, "title": "Types"})
 # APIs
+
+@app.get("/api/types")
+def types_page(request: Request):
+    if not is_logged_in(request):
+        return RedirectResponse(url="/login", status_code=401)
+    all_types = types_all()
+    types = [{"id": r[0], "type_name": r[1]} for r in all_types]
+    return types
+
+@app.post("/api/types")
+def types_create_page(request: Request, type_name: str = Form(...)):
+    if not is_logged_in(request):
+        return RedirectResponse(url="/login", status_code=401)
+    tid = types_create(type_name)
+    return {"id": tid}
+
+@app.post("/api/types/{type_id}")
+def types_update_page(request: Request, type_id: int, type_name: str = Form(...)):
+    if not is_logged_in(request):
+        return RedirectResponse(url="/login", status_code=401)
+    types_update(type_id, type_name)
+    return {"ok": True}
+
+@app.delete("/api/types/{type_id}")
+def types_delete_page(request: Request, type_id: int):
+    if not is_logged_in(request):
+        return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+    types_delete(type_id)
+    return {"ok": True}
+
 @app.get("/api/stats")
 def api_stats(request: Request):
     if not is_logged_in(request):

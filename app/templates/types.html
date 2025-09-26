@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- <div class="container">
+    <h2>مدیریت Type</h2>
+    <form method="POST" action="/types">
+        <div>
+            <input type="text" name="name" placeholder="نام دسته بندی" required>
+            <button type="submit">اضافه کردن</button>
+        </div>
+    </form>
+
+    <ul>
+        {% for t in types %}
+        <li>
+            {{ t.name }}
+            <a href="/types/edit/{{ t.id }}">✏️</a>
+            <a href="/types/delete/{{ t.id }}" onclick="return confirm('مطمئنی؟')">🗑️</a>
+        </li>
+        {% endfor %}
+    </ul>
+</div> -->
+
+<div class="card">
+    <h3>مدیریت دسته بندی </h3>
+    <form id="type-create" class="form-inline">
+      <input type="text" name="type_name" placeholder="نام دسته بندی"required />
+      <button type="submit">  افزودن</button>
+    </form>
+
+    <table class="table" id="types-table">
+      <thead>
+        <tr>
+          <th>آیدی</th>
+          <th>نام دسته بندی</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+</div>
+<script src="/static/js/types.js"></script>
+{% endblock %}

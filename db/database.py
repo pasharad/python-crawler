@@ -11,6 +11,11 @@ def create_tables():
     with connect() as conn:
         c = conn.cursor()
         c.execute("""
+        CREATE TABLE IF NOT EXISTS types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL
+        )""")
+        c.execute("""
         CREATE TABLE IF NOT EXISTS articles_raw (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
@@ -32,7 +37,9 @@ def create_tables():
             source TEXT,
             tags TEXT,
             sent BOOL DEFAULT FALSE,
-            created_at TIMESTAMP DEFAULT (datetime(CURRENT_TIMESTAMP, '+3 hours', '+30 minutes'))
+            type_id INTEGER,
+            created_at TIMESTAMP DEFAULT (datetime(CURRENT_TIMESTAMP, '+3 hours', '+30 minutes')),
+            FOREIGN KEY (type_id) REFERENCES types(id)
         )""")
         c.execute("""
         CREATE TABLE IF NOT EXISTS match_rules (
@@ -176,12 +183,26 @@ def rules_all():
         c = conn.cursor()
         c.execute("SELECT id, pattern, tag, enabled FROM match_rules ORDER BY id DESC")
         return c.fetchall()
+    
+def types_all():
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("SELECT id, name FROM types ORDER BY name ASC")
+        return c.fetchall()
 
 def rules_create(pattern: str, tag: str, enabled: bool=True):
     with connect() as conn:
         c = conn.cursor()
         c.execute("INSERT INTO match_rules (pattern, tag, enabled) VALUES (?, ?, ?)",
                   (pattern.strip(), tag.strip(), enabled))
+        conn.commit()
+        return c.lastrowid
+
+def types_create(name: str):
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("INSERT INTO types (name) VALUES (?)",
+                  (name.strip(),))
         conn.commit()
         return c.lastrowid
 
@@ -192,10 +213,24 @@ def rules_update(rule_id: int, pattern: str, tag: str, enabled: bool):
                   (pattern.strip(), tag.strip(), enabled, rule_id))
         conn.commit()
 
+def types_update(type_id: int, name: str):
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("UPDATE types SET name=? WHERE id=?",
+                  (name.strip(), type_id))
+        conn.commit()
+
+
 def rules_delete(rule_id: int):
     with connect() as conn:
         c = conn.cursor()
         c.execute("DELETE FROM match_rules WHERE id=?", (rule_id,))
+        conn.commit()
+
+def types_delete(type_id: int):
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM types WHERE id=?", (type_id,))
         conn.commit()
 
 def rocket_lunch_exists(title: str) -> bool:

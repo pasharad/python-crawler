@@ -3,14 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ title or "Panel" }}</title>
   <link rel="stylesheet" href="/static/css/style.css" />
+  <title>{% block title %}{{title or "News Geo"}}{% endblock %}</title>
   <!-- Chart.js از CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">Crawler Panel</div>
+    <div class="brand">News Geo</div>
+    <a class="brand" href="/">داشبورد</a>
+    <a class="brand" href="/types">مدیریت دسته بندی </a>
+    <a class="brand" href="/articles/search">جستجوی مقاله</a>
     <nav>
       <a href="/logout">خروج</a>
     </nav>
