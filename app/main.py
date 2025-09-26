@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import json
 import os
 import sqlite3
 from fastapi import FastAPI, Form, Request
@@ -6,7 +7,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-from db.database import get_counts_and_tags_breakdown, rules_all, rules_create, rules_delete, rules_update, types_all, types_create, types_delete, types_update
+from db.database import get_counts_and_tags_breakdown, rules_all, rules_create, rules_delete, rules_update, types_all, types_create, types_delete, types_update, get_cleaned_articles_by_date, set_type
 from app.auth import router as auth_router, is_logged_in
 
 SECRET_KEY = os.getenv("APP_SECRET", "change-me-please")
@@ -40,6 +41,12 @@ def types_page(request: Request):
     if not is_logged_in(request):
         return RedirectResponse(url="/login", status_code=401)
     return templates.TemplateResponse("types.html", {"request": request, "title": "Types"})
+
+@app.get("/search")
+def search_page(request: Request):
+    if not is_logged_in(request):
+        return RedirectResponse(url="/login", status_code=401)
+    return templates.TemplateResponse("search_articles.html", {"request": request, "title": "Search Articles"})
 # APIs
 
 @app.get("/api/types")
@@ -157,3 +164,19 @@ def api_articles_trend(request: Request):
         })
 
     return {"trend": data}
+
+@app.get("/api/search_articles/{date}")
+def api_search_articles(request: Request, date):
+    if not is_logged_in(request):
+        return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+
+    results = [{"id": r[0], "title": r[1], "url": r[2], "date": r[3], "description": r[4], "summery": r[5], "translated_text": r[6], "source": r[7], "tags": r[8], "type_id": r[9]} for r in get_cleaned_articles_by_date(date) if r[8]]
+    return results
+
+@app.post("/api/articles/set_type/{article_id}")
+async def api_articles_set_types(request: Request, article_id: int):
+    if not is_logged_in(request):
+        return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+    type_id = await request.json()
+    type_id = int(type_id["type_id"]) if type_id["type_id"] else None
+    set_type(article_id, type_id)

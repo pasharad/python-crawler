@@ -23,7 +23,9 @@
   .topbar .brand { font-weight: 700; color: var(--accent); }
   .topbar a { color: var(--text); text-decoration: none; }
   
-  .container { padding: 20px; max-width: 1100px; margin: auto; }
+  .container { padding: 0px; max-width: 2000px; margin: auto; }
+
+  
   
   .grid {
     display: grid;

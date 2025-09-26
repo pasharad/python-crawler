@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container no-width">
+    <h2>جستجوی مقاله‌ها</h2>
+
+    <!-- فرم انتخاب تاریخ -->
+    <div class="form-section">
+        <label for="date">تاریخ:</label>
+        <input type="date" id="date" name="date" required>
+        <button id="search-btn">🔍 جستجو</button>
+    </div>
+
+    
+    <!-- جدول مقالات -->
+    <div style="overflow-x: auto;">
+    <table id="articles-table">
+        <thead>
+            <tr>
+                <th>عنوان</th>
+                <th>لینک</th>
+                <th>تاریخ</th>
+                <th>متن</th>
+                <th>خلاصه</th>
+                <th>خلاصه دوم</th>
+                <th>متن ترجمه شده</th>
+                <th>متن ترجمه شده دوم</th>
+                <th>منبع</th>
+                <th> نشانه ها</th>
+                <th id="type">دسته بندی</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    </div>
+</div>
+
+<style>
+    .form-section {
+        margin: 40px 0;
+        display: flex;
+    }
+    input[type="date"] {
+        padding: 6px;
+        margin-left: 6px;
+        border: 1px solid #4a0eb9;
+        border-radius: 4px;
+    }
+    #search-btn {
+        padding: 6px 12px;
+        border: none;
+        background-color: #007BFF;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    #search-btn:hover {
+        background-color: #0056b3;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        
+    }
+    table th, table td {
+        border: 1px solid #fafafa;
+        padding: 2px;
+        text-align: right;
+        width: auto;
+    }
+    table th {
+        background-color: #4a0eb9;
+    }
+    table tr:nth-child(even) {
+        background-color: #0a56d0;
+    }
+    table a {
+        color: #007BFF;
+        text-decoration: none;
+    }
+    table a:hover {
+        text-decoration: underline;
+    }
+
+    table th:nth-child(1),
+    table td:nth-child(1) {
+    min-width: 150px;
+    text-align: left; /* ستون عنوان */
+    }
+
+    table th:nth-child(2),
+    table td:nth-child(2) {
+    min-width: 120px; /* ستون لینک */
+    }
+
+    table th:nth-child(3),
+    table td:nth-child(3) {
+    min-width: 200px; /* ستون تاریخ */
+    }
+
+    table th:nth-child(4),
+    table td:nth-child(4) {
+    min-width: 300px;
+    text-align: left; /* ستون متن */
+    }
+
+    table th:nth-child(5),
+    table td:nth-child(5) {
+    min-width: 250px;
+    text-align: left; /* ستون خلاصه */
+    }
+
+    table th:nth-child(6),
+    table td:nth-child(6) {
+    min-width: 250px;
+    text-align: left; /* 2ستون خلاصه */
+    }
+
+    table th:nth-child(7),
+    table td:nth-child(7) {
+    min-width: 300px; /* ستون متن ترجمه */
+    }
+
+    table th:nth-child(8),
+    table td:nth-child(8) {
+    min-width: 300px; /* 2ستون متن ترجمه */
+    }
+
+    table th:nth-child(9),
+    table td:nth-child(9) {
+    min-width: 50px; /* ستون منبع  */
+    }
+
+    table th:nth-child(10),
+    table td:nth-child(10) {
+    min-width: 150px; /* ستون نشانه ها  */
+    }
+
+    table th:nth-child(11),
+    table td:nth-child(11) {
+    min-width: 150px; /* ستون دسته بندی  */
+    }
+
+</style>
+
+<script>
+document.getElementById("search-btn").addEventListener("click", async () => {
+    const date = document.getElementById("date").value;
+    if (!date) {
+        alert("لطفا تاریخ را انتخاب کنید.");
+        return;
+    }
+
+    try {
+        // درخواست به API
+        const res = await fetch(`/api/search_articles/${date}`);
+        if (!res.ok) throw new Error("خطا در دریافت داده‌ها");
+
+        const data = await res.json();
+        const tbody = document.querySelector("#articles-table tbody");
+        const types = await fetch(`/api/types`, {method: "GET"}).then(r => r.json());
+        // پاک کردن جدول قبلی
+        tbody.innerHTML = "";
+
+        // پر کردن جدول جدید
+        data.forEach(article => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${article.title}</td>
+                <td><a href="${article.url}" target="_blank">لینک</a></td>
+                <td>${article.date}</td>
+                <td>${article.description.slice(0, 100)}...</td>
+                <td>${article.summery || ""}</td>
+                <td>${article.translated_text || ""}</td>
+                <td>${article.source || ""}</td>
+                <td>${article.tags || ""}</td>
+                <td>${article.tags || ""}</td>
+                <td>${article.tags || ""}</td>
+                <td>
+                    <select data-id="${article.id}">
+                        <option value="" ${!article.type_id ? "selected" : ""}>None</option>
+                        ${types.map(type => `
+                            <option value="${type.id}" ${article.type_id === type.id ? "selected" : ""}>
+                                ${type.type_name}
+                            </option>
+                        `).join('')}
+                    </select>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // هندل تغییر Type در سلکت باکس
+        document.querySelectorAll("select[data-id]").forEach(sel => {
+            sel.addEventListener("change", async () => {
+                const id = sel.dataset.id;
+                const type_id = sel.value;
+
+                await fetch(`/api/articles/set_type/${id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ type_id })
+                });
+            });
+        });
+
+    } catch (err) {
+        console.error(err);
+        alert("خطا در بارگذاری مقاله‌ها");
+    }
+});
+</script>
+{% endblock %}

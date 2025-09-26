@@ -127,6 +127,28 @@ def update_cleaned_articles(tags: str, url:str):
                 """, (tags, url))
         conn.commit()
 
+def get_cleaned_articles_by_date(date: str):
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute("""
+        SELECT c.id, c.title, c.url, c.date, c.description, c.summery, c.translated_text, c.source, c.tags, c.type_id
+        FROM articles_cleaned c
+        WHERE DATE(c.date) = DATE(?)
+        """, (date,))
+        rows = c.fetchall()
+        return rows
+    
+def set_type(article_id: int, type_id: int):
+    with connect() as conn:
+        c = conn.cursor()
+        c.execute(
+            """
+            UPDATE articles_cleaned
+            SET type_id = ?
+            WHERE id = ?
+            """, (type_id, article_id)
+        )
+
 def get_not_send_cleaned_articles():
     with connect() as conn:
         c = conn.cursor()
